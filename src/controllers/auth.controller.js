@@ -1,6 +1,14 @@
 import User from "../models/user.model.js";
-import generateToken from "../utils/generateToken.js";
+// import generateToken from "../utils/generateToken.js";
 import bcrypt from "bcryptjs";
+import generateToken from "../utils/generateToken.js";
+
+const cookieOptions = {
+  httpOnly: true, // JS on the client cannot read it → protects against XSS
+  secure: false,
+  sameSite: "lax", // protects against CSRF
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+};
 
 export const signup = async (req, res) => {
   const { email, password, name, role } = req.body;
@@ -9,7 +17,7 @@ export const signup = async (req, res) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  const existingUser = await User.findOne({ email });  
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res.status(409).json({ message: "Email already registered" });
   }
@@ -23,7 +31,10 @@ export const signup = async (req, res) => {
     role,
   });
 
-  return res.status(201).json({
+  const token = generateToken(user); // token generate
+  res.cookie("token", token, cookieOptions);
+
+  res.status(201).json({
     message: "Signup successful",
     user: { id: user._id, name: user.name, email: user.email, role: user.role },
   });
@@ -49,7 +60,10 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    return res.status(200).json({
+    const token = generateToken(user); // token generate
+    res.cookie("token", token, cookieOptions);
+
+    res.status(200).json({
       message: "Login successful",
       user: {
         id: user._id,
@@ -61,4 +75,11 @@ export const login = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
+};
+
+export const logout = async (req, res) => {
+  res.clearCookie("token", cookieOptions);
+  res.status(200).json({
+    message: "Logout Successfull",
+  });
 };
