@@ -7,6 +7,7 @@ import { getProduct } from "./src/controllers/product.contoller.js";
 import { protect } from "./middlewares/auth.middleware.js";
 import cookieParser from "cookie-parser";
 import cors from "cors"
+import { deleteUserById, updateUserById, getAllUsers } from "./src/controllers/user.controller.js";
 
 const app = express();
 
@@ -23,6 +24,10 @@ app.post("/login", login);
 app.post("/signup", signup);
 app.get("/products", protect, getProduct);
 app.post("/logout", protect, logout);
+
+app.delete("/user/:id", protect, deleteUserById)
+app.put("/user/:id", protect, updateUserById)
+app.get("/users", getAllUsers);
 
 app.get("/", (req, res) => {
   console.log("server is runnign");
